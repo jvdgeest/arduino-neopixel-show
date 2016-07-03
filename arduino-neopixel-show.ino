@@ -223,11 +223,14 @@ class NeoPatterns : public Adafruit_NeoPixel {
   }
 };
 
-#define BUTTON_PIN  3
-#define PIXEL_PIN   2 
-#define PIXEL_COUNT 55
-#define SHOW_COUNT  11
+#define BUTTON_PIN    3
+#define PIXEL_PIN     2 
+#define PIXEL_COUNT   55
+#define SHOW_COUNT    11
+#define RANDOM_COUNT  3
 
+int randomRounds = 0;       // rounds that have completed for random show
+bool randomMode = false;    // randomly go through shows
 int currentShow = 0;        // the current show
 int buttonState;            // the current reading from the input pin
 int lastButtonState = LOW;  // the previous reading from the input pin
@@ -257,23 +260,35 @@ void loop() {
       buttonState = reading;
       if (buttonState == HIGH) {
         lastPressTime = millis();
-        currentShow++;
-        if (currentShow > SHOW_COUNT - 1) {
-          currentShow = 1;
-        }
-        startShow(currentShow);
+        randomMode = false;
+        nextShow();
       }
-    } else if (reading == HIGH && (millis() - lastPressTime) > 5000) {
-      currentShow = 0;
-      startShow(0);
-      lastPressTime = millis();
+    } else if (reading == HIGH && (millis() - lastPressTime) > 2500) {
+      if ((millis() - lastPressTime) > 5000) {
+        startShow(0);
+        randomMode = false;
+        lastPressTime = millis();
+      } else if (!randomMode) {
+        randomRounds = 0;
+        randomMode = true;
+        nextShow();
+      }
     }
   }
   
   lastButtonState = reading;
 }
 
+void nextShow() {
+  currentShow++;
+  if (currentShow > SHOW_COUNT - 1) {
+    currentShow = 1;
+  }
+  startShow(currentShow);
+}
+
 void startShow(int index) {
+  currentShow = index;
   switch (index) {
     case 0:
       Led.ColorWipe(Led.Color(0, 0, 0), 10); // Black (off)
@@ -312,4 +327,11 @@ void startShow(int index) {
 }
 
 void LedComplete() {
+  if (randomMode) {
+    randomRounds++;
+    if (randomRounds > RANDOM_COUNT) {
+      randomRounds = 0;
+      nextShow();
+    }
+  }
 }
