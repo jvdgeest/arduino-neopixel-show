@@ -226,11 +226,12 @@ class NeoPatterns : public Adafruit_NeoPixel {
 #define BUTTON_PIN  3
 #define PIXEL_PIN   2 
 #define PIXEL_COUNT 55
-#define SHOW_COUNT  10
+#define SHOW_COUNT  11
 
 int currentShow = 0;        // the current show
 int buttonState;            // the current reading from the input pin
 int lastButtonState = LOW;  // the previous reading from the input pin
+long lastPressTime = 0;     // the last time the button was pressed
 long lastDebounceTime = 0;  // the last time the output pin was toggled
 long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
@@ -255,15 +256,20 @@ void loop() {
     if (reading != buttonState) {
       buttonState = reading;
       if (buttonState == HIGH) {
+        lastPressTime = millis();
         currentShow++;
         if (currentShow > SHOW_COUNT - 1) {
-          currentShow = 0;
+          currentShow = 1;
         }
         startShow(currentShow);
       }
+    } else if (reading == HIGH && (millis() - lastPressTime) > 5000) {
+      currentShow = 0;
+      startShow(0);
+      lastPressTime = millis();
     }
   }
-
+  
   lastButtonState = reading;
 }
 
@@ -273,31 +279,34 @@ void startShow(int index) {
       Led.ColorWipe(Led.Color(0, 0, 0), 10); // Black (off)
       break;
     case 1:
-      Led.TheaterChase(Led.Color(0, 0, 0), Led.Color(0, 150, 150), 100);
+      Led.TheaterChase(Led.Color(0, 0, 0), Led.Color(0, 255, 255), 100);
       break;
     case 2:
       Led.RainbowCycle(30);
       break;
     case 3:
-      Led.Fade(Led.Color(255, 255, 255), Led.Color(0, 150, 150), 100, 100);
+      Led.Fade(Led.Color(255, 255, 255), Led.Color(0, 255, 255), 100, 100);
       break;
     case 4:
       Led.Scanner(Led.Color(255, 0, 0), 55);
       break;
     case 5:
-      Led.ColorWipe(Led.Color(0, 150, 150), 50); // Light blue
+      Led.ColorWipe(Led.Color(0, 255, 255), 50); // Light blue
       break;
     case 6:
-      Led.ColorWipe(Led.Color(150, 0, 0), 50); // Red
+      Led.ColorWipe(Led.Color(255, 0, 0), 50); // Red
       break;
     case 7:
-      Led.ColorWipe(Led.Color(0, 150, 0), 50); // Green
+      Led.ColorWipe(Led.Color(0, 255, 0), 50); // Green
       break;
     case 8:
-      Led.ColorWipe(Led.Color(0, 0, 150), 50); // Blue
+      Led.ColorWipe(Led.Color(0, 0, 255), 50); // Blue
       break;
     case 9:
-      Led.ColorWipe(Led.Color(150, 0, 150), 50); // Pink
+      Led.ColorWipe(Led.Color(255, 0, 255), 50); // Pink
+      break;
+    case 10:
+      Led.ColorWipe(Led.Color(255, 255, 255), 50); // White
       break;
   }
 }
